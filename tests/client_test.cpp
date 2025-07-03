@@ -1,4 +1,4 @@
-#include "./sqlite3_wrapper.hpp"
+#include <src/sqlite3_wrapper.hpp>
 
 #include <vector>
 
