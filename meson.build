@@ -23,3 +23,11 @@ client_test = executable(
 )
 
 test('client_test', client_test, suite: 'snapshot')
+
+test(
+  'snapshot_test',
+  files('scripts/snapshot_db.sh'),
+  depends: [client_test],
+  timeout: 30,
+  suite: 'snapshot',
+)
