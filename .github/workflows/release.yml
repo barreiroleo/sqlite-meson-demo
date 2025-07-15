@@ -9,7 +9,7 @@ on:
 
 jobs:
   build-test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -34,17 +34,29 @@ jobs:
 
   release:
     needs: build-test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
     steps:
       - name: Download shared library artifact
         uses: actions/download-artifact@v4
         with:
           name: libsqlite3_wrapper
 
-      - name: Create GitHub Release
+      # Generate release notes using release-please
+      - id: notes
+        uses: googleapis/release-please-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          release-type: simple
+          skip-github-release: true
+
+      # Create the GitHub Release using the release note as body + the artifact
+      - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
+          body: ${{ steps.notes.outputs.release_notes }}
           files: libsqlite3_wrapper.so
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
