@@ -84,7 +84,7 @@ int main(int argc, char* argv[])
         return 1;
     }
     for (const auto& book : books) {
-        std::println("Id: {}, Title: {}, Author: {}", book.id, book.title, book.author);
+        std::cout << std::format("Id: {}, Title: {}, Author: {}\n", book.id, book.title, book.author);
     }
 
     if (!connection.execute(update_student_entry)) {
