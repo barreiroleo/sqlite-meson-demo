@@ -1,8 +1,8 @@
 #pragma once
 
 #include <future>
+#include <iostream>
 #include <mutex>
-#include <print>
 #include <sqlite3.h>
 #include <string_view>
 
@@ -29,7 +29,7 @@ public:
     ~DBConn()
     {
         if (!m_is_opened) {
-            std::println("[WARN] You're trying to close an unopened connection");
+            std::cout << "[WARN] You're trying to close an unopened connection\n";
             return;
         }
         sqlite3_close(m_db_ptr);
@@ -40,7 +40,7 @@ public:
     {
         m_is_opened = (sqlite3_open(m_db_name.c_str(), &m_db_ptr) == SQLITE_OK);
         if (!m_is_opened) {
-            std::println("Database could not be opened: {}", sqlite3_errmsg(m_db_ptr));
+            std::cout << std::format("Database could not be opened: {}\n", sqlite3_errmsg(m_db_ptr));
         }
         return m_is_opened;
     }
@@ -50,7 +50,7 @@ public:
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         if (char* err_msg {}; sqlite3_exec(m_db_ptr, command.data(), callback, callback_args, &err_msg) != SQLITE_OK) {
-            std::println("Error running command: {}", err_msg);
+            std::cout << std::format("Error running command: {}\n", err_msg);
             return false;
         }
         return true;
