@@ -1,5 +1,6 @@
 #include <src/sqlite3_wrapper.hpp>
 
+#include <format>
 #include <vector>
 
 namespace {
@@ -47,7 +48,7 @@ struct select_title_author {
         // for (size_t i {}; i < argc; ++i) {
         //     std::println("{}: {}", az_col_name[i], argv[i]);
         // }
-        for (size_t i {}; i < argc; ++i) {
+        for (int i {}; i < argc; ++i) {
             Book new_book {
                 .id = argv[i] ? std::atoi(argv[i]) : -1,
                 .title = argv[++i] ? argv[i] : "",

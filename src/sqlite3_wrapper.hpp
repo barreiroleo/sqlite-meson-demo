@@ -1,5 +1,6 @@
 #pragma once
 
+#include <format>
 #include <future>
 #include <iostream>
 #include <mutex>
@@ -29,7 +30,7 @@ public:
     ~DBConn()
     {
         if (!m_is_opened) {
-            std::cout << "[WARN] You're trying to close an unopened connection\n";
+            std::cout << std::format("[WARN] You're trying to close an unopened connection\n");
             return;
         }
         sqlite3_close(m_db_ptr);
