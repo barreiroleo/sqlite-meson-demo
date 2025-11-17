@@ -27,6 +27,12 @@ coverage:
 	@cat build/meson-logs/coverage.txt
 	@echo "HTML coverage report generated in ${PWD}/build/meson-logs/coveragereport/index.html"
 
+perf-launch:
+	@bash ./scripts/profiling.sh --launch sqlite-demo
+
+perf-listen:
+	@bash ./scripts/profiling.sh --listen sqlite-demo
+
 graph:
 	@ninja -C build -t graph all | dot -Tpng -o build_graph.png
 
