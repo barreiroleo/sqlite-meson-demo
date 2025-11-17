@@ -10,12 +10,25 @@ on:
 jobs:
   build-test:
     runs-on: ubuntu-24.04
+    env:
+      CC: clang
+      CXX: clang++
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y ninja-build meson sqlite3 libsqlite3-dev valgrind
+        run: |
+          # Add LLVM repository
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
+          echo "deb http://apt.llvm.org/noble/ llvm-toolchain-noble main" | sudo tee /etc/apt/sources.list.d/llvm.list
+
+          # Update and install dependencies
+          sudo apt-get update
+          sudo apt-get install -y ninja-build meson sqlite3 libsqlite3-dev valgrind
+
+          # Install clang main and libc++
+          sudo apt-get install -y clang libc++-dev libc++abi-dev
 
       - name: Generate and build
         run: make default
