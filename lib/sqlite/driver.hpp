@@ -106,6 +106,7 @@ private:
         }
 
         const auto callback_result = bind_callback(stmt);
+        const auto reset_code = sqlite3_reset(stmt);
         const auto finalize_code = sqlite3_finalize(stmt);
 
         // Check callback result first, then check finalize result
@@ -156,25 +157,6 @@ static auto bind_stmt(sqlite3_stmt& stmt, int col, int value) -> Result::Code
 static auto step(sqlite3_stmt& stmt) -> Result::Code
 {
     return sqlite3_step(&stmt);
-}
-
-/// @brief Steps through the prepared statement and resets it for reuse.
-/// Use this for one-shot operations (INSERT/DELETE).
-/// @param[in] stmt The prepared statement.
-/// @return SQLite result code.
-static auto step_and_reset(sqlite3_stmt& stmt) -> Result::Code
-{
-    const auto step_code = sqlite3_step(&stmt);
-    const auto reset_code = sqlite3_reset(&stmt);
-
-    // Check step result first, then reset result
-    if (step_code != SQLITE_DONE && step_code != SQLITE_ROW) {
-        return step_code;
-    }
-    if (reset_code != SQLITE_OK) {
-        return reset_code;
-    }
-    return step_code;
 }
 
 }

@@ -59,7 +59,7 @@ inline auto insert_country(const SQLite::Conn& con) -> SQLite::Result
         if (const auto code = SQLite::bind_stmt(*stmt, 3, country.area); SQLITE_OK != code) {
             return code;
         }
-        return SQLite::step_and_reset(*stmt);
+        return SQLite::step(*stmt);
     };
 
     std::future<SQLite::Result> res = con.execute_stmt(query, bind_callback);
@@ -109,7 +109,7 @@ inline auto delete_country(const SQLite::Conn& con) -> SQLite::Result
         if (const auto code = SQLite::bind_stmt(*stmt, 1, country.name); SQLITE_OK != code) {
             return code;
         }
-        return SQLite::step_and_reset(*stmt);
+        return SQLite::step(*stmt);
     };
 
     constexpr std::string_view query { R"(DELETE FROM countries WHERE name = ?;)" };
