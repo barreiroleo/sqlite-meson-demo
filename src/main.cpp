@@ -6,6 +6,8 @@
 
 int main(int argc, char* argv[])
 {
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
     const auto conn = SQLite::Conn::setup("./build/demo.db");
     if (!conn) {
         std::println("Failed to open database: {} (code {})", conn.error().msg, conn.error().code);
