@@ -92,6 +92,8 @@ private:
     }
 
     /// @brief Executes a prepared statement synchronously.
+    /// The callback should return SQLITE_OK, SQLITE_DONE, or SQLITE_ROW for success.
+    /// Any other return code is treated as an error.
     /// See execute_stmt() for asynchronous execution.
     [[nodiscard]]
     auto execute_stmt_sync(std::string_view command, const StmtCallback& bind_callback) const -> Result
@@ -103,13 +105,17 @@ private:
             return { .msg = sqlite3_errmsg(m_db), .code = code };
         }
 
-        if (const auto code = bind_callback(stmt); SQLITE_OK != code) {
-            return { .msg = sqlite3_errmsg(m_db), .code = code };
+        const auto callback_result = bind_callback(stmt);
+        const auto finalize_code = sqlite3_finalize(stmt);
+
+        // Check callback result first, then check finalize result
+        if (callback_result != SQLITE_OK && callback_result != SQLITE_DONE && callback_result != SQLITE_ROW) {
+            return { .msg = sqlite3_errstr(callback_result), .code = callback_result };
+        }
+        if (finalize_code != SQLITE_OK) {
+            return { .msg = sqlite3_errstr(finalize_code), .code = finalize_code };
         }
 
-        if (const auto code = sqlite3_finalize(stmt); SQLITE_OK != code) {
-            return { .msg = sqlite3_errmsg(m_db), .code = code };
-        }
         return {};
     }
 
@@ -143,15 +149,32 @@ static auto bind_stmt(sqlite3_stmt& stmt, int col, int value) -> Result::Code
     return sqlite3_bind_int(&stmt, col, value);
 }
 
-/// @brief Steps through the prepared statement and resets it for future use.
+/// @brief Steps through the prepared statement.
+/// Use this for iterating through query results or executing single statements.
 /// @param[in] stmt The prepared statement.
-/// @return True if the step and reset were successful, false otherwise.
+/// @return SQLite result code.
 static auto step(sqlite3_stmt& stmt) -> Result::Code
 {
-    if (const auto code = sqlite3_step(&stmt); SQLITE_OK != code) {
-        return code;
+    return sqlite3_step(&stmt);
+}
+
+/// @brief Steps through the prepared statement and resets it for reuse.
+/// Use this for one-shot operations (INSERT/DELETE).
+/// @param[in] stmt The prepared statement.
+/// @return SQLite result code.
+static auto step_and_reset(sqlite3_stmt& stmt) -> Result::Code
+{
+    const auto step_code = sqlite3_step(&stmt);
+    const auto reset_code = sqlite3_reset(&stmt);
+
+    // Check step result first, then reset result
+    if (step_code != SQLITE_DONE && step_code != SQLITE_ROW) {
+        return step_code;
     }
-    return sqlite3_reset(&stmt);
+    if (reset_code != SQLITE_OK) {
+        return reset_code;
+    }
+    return step_code;
 }
 
 }
