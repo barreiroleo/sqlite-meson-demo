@@ -13,4 +13,4 @@ add_subdirectory(lib)
 
 add_executable(sqlite-demo src/main.cpp)
 
-target_link_libraries(sqlite-demo PRIVATE SQLiteWrap)
+target_link_libraries(sqlite-demo PRIVATE sqlite-cpp)

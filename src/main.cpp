@@ -6,7 +6,7 @@
 
 int main(int argc, char* argv[])
 {
-    const auto conn = SQLite::Conn::setup("./build/my.db");
+    const auto conn = SQLite::Conn::setup("./build/demo.db");
     if (!conn) {
         std::println("Failed to open database: {} (code {})", conn.error().msg, conn.error().code);
     }
