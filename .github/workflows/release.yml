@@ -1,0 +1,59 @@
+name: Build, Test, and Release Library
+
+on:
+  push:
+    branches: [master]
+    tags: ["v*.*.*"]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y ninja-build meson sqlite3 libsqlite3-dev valgrind
+
+      - name: Generate and build
+        run: make default
+
+      - name: Test
+        run: make test
+
+      - name: Upload shared library artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sqlite-demo
+          path: ./build/sqlite-demo
+
+  release:
+    needs: build-test
+    runs-on: ubuntu-24.04
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - name: Download shared library artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: sqlite-demo
+
+      # Generate release notes using release-please
+      - id: notes
+        uses: googleapis/release-please-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          release-type: simple
+          skip-github-release: true
+
+      # Create the GitHub Release using the release note as body + the artifact
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body: ${{ steps.notes.outputs.release_notes }}
+          files: sqlite-demo
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
