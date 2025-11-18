@@ -7,6 +7,10 @@ on:
   pull_request:
     branches: [master]
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   build-test:
     runs-on: ubuntu-24.04
@@ -36,18 +40,40 @@ jobs:
       - name: Test
         run: make test
 
-      - name: Upload shared library artifact
+      - name: Run perf
+        id: find-perf
+        run: |
+          make perf-launch
+          PERF_DIR=$(find ./build/perf-* -name "*.html" -type f | head -1 | xargs dirname 2>/dev/null || echo "")
+          if [ -n "$PERF_DIR" ]; then
+            echo "Found performance artifacts in: $PERF_DIR"
+            PERF_TAR="perf-artifacts.tar.gz"
+            tar -czf "$PERF_TAR" -C "$(dirname "$PERF_DIR")" "$(basename "$PERF_DIR")"
+            echo "perf-tar=$PERF_TAR" >> $GITHUB_OUTPUT
+            echo "artifacts-found=true" >> $GITHUB_OUTPUT
+            echo "Created compressed archive: $PERF_TAR"
+          else
+            echo "No performance artifacts found"
+            echo "artifacts-found=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload binary artifact
         uses: actions/upload-artifact@v4
         with:
           name: sqlite-demo
           path: ./build/sqlite-demo
 
+      - name: Upload performance artifacts
+        if: steps.find-perf.outputs.artifacts-found == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-artifacts
+          path: ${{ steps.find-perf.outputs.perf-tar }}
+
   release:
     needs: build-test
     runs-on: ubuntu-24.04
     if: startsWith(github.ref, 'refs/tags/v')
-    permissions:
-      contents: write
     steps:
       - name: Download shared library artifact
         uses: actions/download-artifact@v4
